@@ -5,5 +5,5 @@
 - Unzip main folder and every folder inside and create new folder named 'data' inside the project and put your data here
 
 ### Important
-- Don't push data folder on github
+- Don't push data folder on github (If you named it data gitignore should skip this folder)
 - Don't push to master
