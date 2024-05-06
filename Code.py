@@ -62,7 +62,7 @@ def generate_graph(points: list) -> nx.graph:
 def __get_hic_map(points: list) -> np.array:
     matrix_of_distances = distance_matrix(points, points)
     max_distance = np.max(matrix_of_distances)
-    matrix_of_distances = max_distance - matrix_of_distances
+    matrix_of_distances = np.abs(matrix_of_distances - max_distance)
     return matrix_of_distances
 
 def __change_dimension(matrix_of_distances: np.array, size: int) -> np.matrix:
@@ -80,4 +80,50 @@ def f_function(points, original_matrix):
     corelation = __pearson_corelation(original_matrix, changed_dimension_matrix)
     print('Pearson correlation = ', corelation)
     return corelation
+
+def initalize_route(graph):
+    start = random.choice(list(graph.nodes()))
+    route = [graph.nodes[start]['pos']]
+    neighbour = random.choice(list(graph.neighbors(start)))
+    route.append(graph.nodes[neighbour]['pos'])
+    nodes = [start, neighbour]
+    return route, nodes
+
+def __add_to_route(graph, route, nodes):
+    neighbours = list(graph.neighbors(nodes[-1]))
+    if len(neighbours) == 1:
+        neighbour = neighbours[0]
+    elif all(n in nodes for n in neighbours):
+        neighbour = random.choice(list(graph.neighbors(nodes[-1])))
+    elif neighbours[0] in nodes and neighbours[1] not in nodes:
+        neighbour = random.choices(neighbours, [0.1, 0.9])[0]
+    else:
+        neighbour = random.choices(neighbours, [0.9, 0.1])[0]
+
+    route.append(graph.nodes[neighbour]['pos'])
+    nodes.append(neighbour)
+    return route, nodes
+
+def __delete_last(route, nodes):
+    nodes = nodes[:-1]
+    route = route[:-1]
+    return route, nodes
+
+def g_function(graph, route, nodes):
+    prob = random.uniform(0,1)
+    if prob < 0.5:
+        route, nodes = __add_to_route(graph,route,nodes)
+    elif prob < 0.9:
+        pass
+    else:
+        route,nodes = __delete_last(route, nodes)
+    
+    return route, nodes
+    
+
+
+
+
+
+
 
