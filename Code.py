@@ -31,8 +31,8 @@ def generate_self_avoiding_walk(max_steps: int, grid: int) -> list:
     visited = set([(0, 0, 0)])
     
     moves = [(0, 0, 1), (0, 0, -1), (0, 1, 0), (0, -1, 0), (1, 0, 0), (-1, 0, 0)]
-    
-    for _ in range(max_steps):
+    i = 0
+    while i < max_steps:
         dx, dy, dz = random.choice(moves)
         new_pos = (walk[-1][0] + dx, walk[-1][1] + dy, walk[-1][2] + dz)
         
@@ -42,6 +42,7 @@ def generate_self_avoiding_walk(max_steps: int, grid: int) -> list:
         if new_pos not in visited:
             walk.append(new_pos)
             visited.add(new_pos)
+            i += 1
         else:
             continue        
     return walk
@@ -70,18 +71,18 @@ def __change_dimension(matrix_of_distances: np.array, size: int) -> np.matrix:
     changed_dimension_matrix = zoom(matrix_of_distances, change_rate, order=1)
     return changed_dimension_matrix
 
-def __pearson_corelation(original_matrix, new_matrix):
+def __pearson_corelation(original_matrix: np.matrix, new_matrix: np.matrix) -> float:
     corelation, pvalue = pearsonr(original_matrix.flatten(), new_matrix.flatten())
     return corelation
 
-def f_function(points, original_matrix):
+def f_function(points: list, original_matrix: np.matrix) -> float:
     matrix_of_distances = __get_hic_map(points)
     changed_dimension_matrix = __change_dimension(matrix_of_distances, original_matrix.shape[0])
     corelation = __pearson_corelation(original_matrix, changed_dimension_matrix)
     print('Pearson correlation = ', corelation)
     return corelation
 
-def initalize_route(graph):
+def initalize_route(graph: nx.graph) -> list:
     start = random.choice(list(graph.nodes()))
     route = [graph.nodes[start]['pos']]
     neighbour = random.choice(list(graph.neighbors(start)))
@@ -89,7 +90,7 @@ def initalize_route(graph):
     nodes = [start, neighbour]
     return route, nodes
 
-def __add_to_route(graph, route, nodes):
+def __add_to_route(graph: nx.graph, route: list, nodes: list) -> list:
     neighbours = list(graph.neighbors(nodes[-1]))
     if len(neighbours) == 1:
         neighbour = neighbours[0]
@@ -104,7 +105,7 @@ def __add_to_route(graph, route, nodes):
     nodes.append(neighbour)
     return route, nodes
 
-def __delete_last(route, nodes):
+def __delete_last(route: list, nodes: list) -> list:
     nodes = nodes[:-1]
     route = route[:-1]
     return route, nodes
@@ -116,7 +117,8 @@ def g_function(graph, route, nodes):
     elif prob < 0.9:
         pass
     else:
-        route,nodes = __delete_last(route, nodes)
+        if len(set(nodes)) > 1:
+            route,nodes = __delete_last(route, nodes)
     
     return route, nodes
     
