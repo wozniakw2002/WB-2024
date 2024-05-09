@@ -31,8 +31,8 @@ def generate_self_avoiding_walk(max_steps: int, grid: int) -> list:
     visited = set([(0, 0, 0)])
     
     moves = [(0, 0, 1), (0, 0, -1), (0, 1, 0), (0, -1, 0), (1, 0, 0), (-1, 0, 0)]
-    i = 0
-    while i < max_steps:
+
+    for i in range(max_steps):
         dx, dy, dz = random.choice(moves)
         new_pos = (walk[-1][0] + dx, walk[-1][1] + dy, walk[-1][2] + dz)
         
@@ -42,7 +42,7 @@ def generate_self_avoiding_walk(max_steps: int, grid: int) -> list:
         if new_pos not in visited:
             walk.append(new_pos)
             visited.add(new_pos)
-            i += 1
+        
         else:
             continue        
     return walk
@@ -109,16 +109,20 @@ def __delete_last(route: list, nodes: list) -> list:
     nodes = nodes[:-1]
     route = route[:-1]
     return route, nodes
+def change_edges_to_one(route, nodes):
+    pass
 
-def g_function(graph, route, nodes):
+
+def g_function(graph: nx.graph, route: list, nodes: list)-> list:
     prob = random.uniform(0,1)
     if prob < 0.5:
         route, nodes = __add_to_route(graph,route,nodes)
     elif prob < 0.9:
         pass
+        #change two edges to one or one to two 
     else:
         if len(set(nodes)) > 1:
-            route,nodes = __delete_last(route, nodes)
+            route,nodes = __delete_last(route, nodes) # dodać możłiwość usunięcia pierwszego
     
     return route, nodes
     
