@@ -7,6 +7,7 @@ import networkx as nx
 from scipy.spatial import distance_matrix
 from scipy.ndimage import zoom
 from scipy.stats import pearsonr
+import math
 
 def get_data(path: str, chromosome : str = b'15') -> np.array:
     data = np.genfromtxt(path, dtype='object', skip_header=1)
@@ -79,7 +80,6 @@ def f_function(points: list, original_matrix: np.matrix) -> float:
     matrix_of_distances = __get_hic_map(points)
     changed_dimension_matrix = __change_dimension(matrix_of_distances, original_matrix.shape[0])
     corelation = __pearson_corelation(original_matrix, changed_dimension_matrix)
-    print('Pearson correlation = ', corelation)
     return corelation
 
 def initalize_route(graph: nx.graph) -> list:
@@ -91,40 +91,71 @@ def initalize_route(graph: nx.graph) -> list:
     return route, nodes
 
 def __add_to_route(graph: nx.graph, route: list, nodes: list) -> list:
-    neighbours = list(graph.neighbors(nodes[-1]))
-    if len(neighbours) == 1:
-        neighbour = neighbours[0]
-    elif all(n in nodes for n in neighbours):
-        neighbour = random.choice(list(graph.neighbors(nodes[-1])))
-    elif neighbours[0] in nodes and neighbours[1] not in nodes:
-        neighbour = random.choices(neighbours, [0.1, 0.9])[0]
-    else:
-        neighbour = random.choices(neighbours, [0.9, 0.1])[0]
-
-    route.append(graph.nodes[neighbour]['pos'])
-    nodes.append(neighbour)
+    wsk = - 1 if random.uniform(0,1) > 0.5 else 0
+    neighbours = list(filter(lambda el: el not in nodes, list(graph.neighbors(nodes[wsk]))))
+    if len(neighbours) != 0:
+        neighbour = random.choice(neighbours)
+        if wsk == 0:
+            nodes[:0] = [neighbour]
+            route[:0] = [graph.nodes[neighbour]['pos']]
+        else:
+            nodes.append(neighbour)
+            route.append(graph.nodes[neighbour]['pos'])
     return route, nodes
 
-def __delete_last(route: list, nodes: list) -> list:
-    nodes = nodes[:-1]
-    route = route[:-1]
-    return route, nodes
-def change_edges_to_one(route, nodes):
-    pass
+
+def __change_edges_to_one(route):
+    indx = random.randint(1, len(route) - 2)
+    route.pop(indx)
+    return route
+
+def __change_edge_to_two(route):
+    indx = random.randint(0, len(route) - 2)
+    left = route[indx]
+    diff = [random.uniform(-1/2,1/2) for _ in range(3)]
+    point = [left[i] + diff[i] for i in range(3)]
+    route.insert(indx + 1, point)
+    return route
 
 
 def g_function(graph: nx.graph, route: list, nodes: list)-> list:
     prob = random.uniform(0,1)
-    if prob < 0.5:
+    if prob < 0.4:
         route, nodes = __add_to_route(graph,route,nodes)
     elif prob < 0.9:
-        pass
-        #change two edges to one or one to two 
+        route = __change_edge_to_two(route)
     else:
-        if len(set(nodes)) > 1:
-            route,nodes = __delete_last(route, nodes) # dodać możłiwość usunięcia pierwszego
-    
+        if len(route) > 2:
+            route = __change_edges_to_one(route)
     return route, nodes
+
+def __accept_func(corr, corr_prop, t):
+    prob = min(math.exp(-(corr -corr_prop)/t), 1)
+    return prob
+
+def simmulated_annealing(graph, t_init, matrix, epochs=1000):
+    route, nodes = initalize_route(graph)
+    
+    corr = f_function(route, matrix)
+    accept = []
+    correlations = [corr]
+    for epoch in range(epochs):
+        print('Epoch: ', epoch) 
+        prob = random.uniform(0,1)
+        t = t_init * (1 - epoch/epochs)
+        route_prop, nodes_prop = g_function(graph, route, nodes)
+        corr_prop = f_function(route_prop, matrix)
+        accept_rate = __accept_func(corr, corr_prop, t)
+        accept.append(accept_rate)
+        if  accept_rate > prob:
+            route = route_prop
+            nodes = nodes_prop
+            corr = corr_prop
+        correlations.append(corr)
+    return route, corr, correlations, accept
+
+
+
     
 
 
