@@ -135,24 +135,33 @@ def __accept_func(corr, corr_prop, t):
 
 def simmulated_annealing(graph, t_init, matrix, epochs=1000):
     route, nodes = initalize_route(graph)
-    
     corr = f_function(route, matrix)
     accept = []
+    steps = []
     correlations = [corr]
     for epoch in range(epochs):
         print('Epoch: ', epoch) 
         prob = random.uniform(0,1)
-        t = t_init * (1 - epoch/epochs)
-        route_prop, nodes_prop = g_function(graph, route, nodes)
+        t = t_init * (1 - epoch / epochs)
+        route_prop, nodes_prop = g_function(graph, route.copy(), nodes)
         corr_prop = f_function(route_prop, matrix)
         accept_rate = __accept_func(corr, corr_prop, t)
         accept.append(accept_rate)
         if  accept_rate > prob:
-            route = route_prop
+            if len(route) < len(route_prop):
+                steps.append(1)
+            elif len(route) == len(route_prop):
+                steps.append(0)
+            else:
+                steps.append(-1)
+
+            route = route_prop.copy()
             nodes = nodes_prop
             corr = corr_prop
+        else:
+            steps.append(0)
         correlations.append(corr)
-    return route, corr, correlations, accept
+    return route, correlations, accept, steps
 
 
 
