@@ -140,7 +140,8 @@ def simmulated_annealing(graph, t_init, matrix, epochs=1000):
     steps = []
     correlations = [corr]
     for epoch in range(epochs):
-        print('Epoch: ', epoch) 
+        if epoch % 100 == 0:
+            print('Epoch: ', epoch) 
         prob = random.uniform(0,1)
         t = t_init * (1 - epoch / epochs)
         route_prop, nodes_prop = g_function(graph, route.copy(), nodes)
@@ -163,6 +164,20 @@ def simmulated_annealing(graph, t_init, matrix, epochs=1000):
         correlations.append(corr)
     return route, correlations, accept, steps
 
+def accepted_move_types(steps):
+    step_back = [step == -1 for step in steps]
+    step_stay = [step == 0 for step in steps]
+    step_forrward = [step == 1 for step in steps]
+    length = len(steps)
+
+    step_back_new = []
+    step_stay_new = []
+    step_forrward_new = []
+    for i in range(length):
+        step_back_new.append(sum(step_back[i:]) / (length - i))
+        step_stay_new.append(sum(step_stay[i:]) / (length - i))
+        step_forrward_new.append(sum(step_forrward[i:]) / (length - i))
+    return [step_back_new, step_stay_new, step_forrward_new]
 
 
     
